@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Salon, Service, Employee
+from .models import Salon, Service, Employee, EmployeeWorkingHours, EmployeeDaysOff
 
 # Register your models here.
 
@@ -19,3 +19,15 @@ class EmployeeAdmin(admin.ModelAdmin):
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
     list_display = ('name', 'salon', 'price', 'duration')
+
+
+@admin.register(EmployeeWorkingHours)
+class EmployeeWorkingHoursAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'day', 'start_time', 'end_time', 'is_day_off')
+
+@admin.register(EmployeeDaysOff)
+class EmployeeDaysOffAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'start_date', 'end_date', 'reason','days_count')
+
+    def days_count(self, obj):
+        return (obj.end_date - obj.start_date).days + 1

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import time
 
 # Create your models here.
 
@@ -79,3 +80,40 @@ class Service(models.Model):
     def __str__(self):
         return f"{self.name} at {self.salon.name}"
 
+
+class EmployeeWorkingHours(models.Model):
+
+    DAYS_CHOICES = [
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday'),
+        (7, 'Sunday'),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name='working_hours')
+    day = models.IntegerField(choices=DAYS_CHOICES)
+    start_time = models.TimeField(default=time(9, 0))
+    end_time = models.TimeField(default=time(18, 0))
+    is_day_off = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.employee.nick_name} - {self.day} - {self.start_time} to {self.end_time}"
+    
+    class Meta:
+        unique_together = ['employee', 'day']
+
+class EmployeeDaysOff(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name='days_off')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.employee.nick_name} off from {self.start_date} to {self.end_date} - {self.reason}"
