@@ -1,11 +1,61 @@
 from rest_framework import serializers
 from .models import Booking, BookingService, Review, BookingPayment
 from users.serializers import CustomerSerializer
+from salons.serializers import EmployeeSerializer
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         read_only_fields = ['id', 'created_at']
         fields = '__all__'
+
+class BookingCreateSerializer(serializers.ModelSerializer):
+    services = serializers.ListField(write_only=True, required=True)
+
+    class Meta:
+        model = Booking
+        read_only_fields = ['id', 'created_at']
+        fields = '__all__'
+
+    def create(self, validated_data):
+        services = validated_data.pop('services', [])
+
+        booking_services = self.initial_data.get('services', [])
+
+        booking = Booking.objects.create(**validated_data)
+
+        for service in booking_services:
+            BookingService.objects.create(booking=booking, **service)
+
+        return booking
+
+    def to_representation(self, instance):
+        return BookingCalendarSerializer(instance).data
+
+class BookingUpdateSerializer(serializers.ModelSerializer):
+    services = serializers.ListField(write_only=True, required=True)
+
+    class Meta:
+        model = Booking
+        read_only_fields = ['id', 'created_at']
+        fields = '__all__'
+
+    def update(self, instance, validated_data):
+
+        booking_services = self.initial_data.get('services', [])
+
+        # remove all existing services
+        BookingService.objects.filter(booking=instance).delete()
+
+        print("booking_services:: ", booking_services)
+        # create new services   
+        for service in booking_services:
+            BookingService.objects.create(booking=instance, **service)
+
+        return instance
+    
+    def to_representation(self, instance):
+        return BookingCalendarSerializer(instance).data
+    
 
 class BookingServiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,7 +90,7 @@ class BookingCalendarSerializer(serializers.ModelSerializer):
             'booking_services',
             'total_price',
             'selected_date',
-            'booking_source'
+            'booking_source',
         ]
         depth = 2
 

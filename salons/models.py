@@ -117,3 +117,40 @@ class EmployeeDaysOff(models.Model):
 
     def __str__(self):
         return f"{self.employee.nick_name} off from {self.start_date} to {self.end_date} - {self.reason}"
+    
+
+class SalonCustomer(models.Model):
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+    ]
+
+    user = models.OneToOneField(
+        'auth.User',
+        on_delete=models.CASCADE, 
+        related_name='salon_customer',
+        null=True, 
+        blank=True
+    )
+    salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='salon_customers')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    full_name = models.CharField(max_length=255, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
+    def __str__(self):
+        return f"{self.full_name} - {self.salon.name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.user:
+            self.user = User.objects.create_user(
+                username=self.phone_number,
+                password=None
+            )
+            self.user.set_unusable_password()
+        super().save(*args, **kwargs)

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-z1(fgi2$-jh6^@o+z)a^it%sxc764t+kf)qrj%o9_#gv075y_y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     
     # 3rd party apps
     'rest_framework',
+    'corsheaders',
 ]
 
 
@@ -55,8 +56,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'salon_booking.urls'
 
 TEMPLATES = [
@@ -113,7 +116,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+
 TIME_ZONE = 'UTC'
+# Toronto timezone
+# TIME_ZONE = 'America/Toronto'
 
 USE_I18N = True
 

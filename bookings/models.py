@@ -2,6 +2,7 @@ from django.db import models
 from salons.models import Service, Salon, Employee
 from users.models import Customer
 from datetime import timedelta
+from django.db.models import Sum
 
 # Create your models here.
 
@@ -26,7 +27,6 @@ class Availability(models.Model):
     
 
 
-from django.db.models import Sum
 
 class Booking(models.Model):
     STATUS_CHOICES = [
@@ -44,7 +44,13 @@ class Booking(models.Model):
         ('walk-in', 'Walk-in'),
     ]
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='booking_customer')
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name='booking_customer',
+        null=True, 
+        blank=True 
+    )
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='booking_salon')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     notes = models.TextField(blank=True)
@@ -78,7 +84,7 @@ class BookingService(models.Model):
 
     booking = models.ForeignKey(
         Booking, 
-        on_delete=models.PROTECT, 
+        on_delete=models.CASCADE, 
         related_name='booking_services',
         null=True, 
         blank=True

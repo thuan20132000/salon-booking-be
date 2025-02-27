@@ -3,5 +3,5 @@ from . import views
 from .api import router
 
 urlpatterns = [
-    path('api/bookings/', include(router.urls)),
+    path('api/', include(router.urls)),
 ]
