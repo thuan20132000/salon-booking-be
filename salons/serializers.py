@@ -22,7 +22,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'price', 'duration', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'price', 'duration', 'created_at', 'updated_at','salon']
 
 
 class ServiceCategorySerializer(serializers.ModelSerializer):
@@ -36,7 +36,6 @@ class SalonCustomerSerializer(serializers.ModelSerializer):
         model = SalonCustomer
         fields = [
             'id', 
-            'salon', 
             'is_active', 
             'created_at', 
             'updated_at',
@@ -45,5 +44,6 @@ class SalonCustomerSerializer(serializers.ModelSerializer):
             'address', 
             'email', 
             'birth_date',
-            'gender'
+            'gender',
+            'salon'
         ]

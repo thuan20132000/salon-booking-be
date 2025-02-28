@@ -1,6 +1,5 @@
 from django.db import models
-from salons.models import Service, Salon, Employee
-from users.models import Customer
+from salons.models import Service, Salon, Employee, SalonCustomer
 from datetime import timedelta
 from django.db.models import Sum
 
@@ -45,8 +44,8 @@ class Booking(models.Model):
     ]
 
     customer = models.ForeignKey(
-        Customer,
-        on_delete=models.CASCADE,
+        SalonCustomer,
+        on_delete=models.SET_NULL,
         related_name='booking_customer',
         null=True, 
         blank=True 
@@ -103,7 +102,7 @@ class BookingService(models.Model):
     )
     service = models.ForeignKey(
         Service, 
-        on_delete=models.PROTECT, 
+        on_delete=models.SET_NULL, 
         related_name='booking_service',
         null=True,
         blank=True

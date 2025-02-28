@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Salon, Service, Employee, EmployeeWorkingHours, EmployeeDaysOff
+from .models import Salon, Service, Employee, EmployeeWorkingHours, EmployeeDaysOff, SalonCustomer
 
 # Register your models here.
 
@@ -31,3 +31,7 @@ class EmployeeDaysOffAdmin(admin.ModelAdmin):
 
     def days_count(self, obj):
         return (obj.end_date - obj.start_date).days + 1
+
+@admin.register(SalonCustomer)
+class SalonCustomerAdmin(admin.ModelAdmin):
+    list_display = ('user', 'salon', 'is_active', 'phone_number', 'full_name', 'address', 'email', 'birth_date', 'gender')

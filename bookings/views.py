@@ -10,6 +10,7 @@ from .serializers import (
     BookingUpdateSerializer
 )
 from rest_framework import status
+from django_filters import rest_framework as filters
 # Create your views here.
 
 # create abstract viewset for booking and booking service
@@ -23,12 +24,20 @@ class BaseBookingViewSet(viewsets.ModelViewSet):
             'status_code': status.HTTP_400_BAD_REQUEST
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    def success_response(self, message, data=None):
+    def success_response(self, message, data=None, metadata=None, status_code=status.HTTP_200_OK):
         return Response({
             'message': message,
             'data': data,
-            'status_code': status.HTTP_200_OK
-        }, status=status.HTTP_200_OK)
+            'metadata': metadata,
+            'status_code': status_code
+        }, status=status_code)
+
+class BookingFilter(filters.FilterSet):
+    salon_id = filters.NumberFilter(field_name='salon_id', lookup_expr='exact', required=True)
+    selected_date = filters.DateFilter(field_name='selected_date', lookup_expr='exact', required=True)
+    class Meta:
+        model = Booking
+        fields = ['salon_id', 'selected_date']
 
 class BookingViewSet(BaseBookingViewSet):
     queryset = Booking.objects.all()
@@ -100,14 +109,16 @@ class BookingServiceViewSet(viewsets.ModelViewSet):
 class BookingCalendarViewSet(BaseBookingViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingCalendarSerializer
-    
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = BookingFilter
 
     def list(self, request):
-        salon_id = request.query_params.get('salon_id')
-        if not salon_id:
-            return self.error_response('salon_id is required')
-        
-        bookings = Booking.objects.filter(salon_id=salon_id)
-        serializer = BookingCalendarSerializer(bookings, many=True)
-
-        return self.success_response('Bookings fetched successfully', serializer.data)
+        try:
+            bookings = self.filter_queryset(self.get_queryset())
+            serializer = BookingCalendarSerializer(bookings, many=True)
+            metadata = {
+                'total_bookings': bookings.count(),
+            }
+            return self.success_response('Bookings fetched successfully', serializer.data, metadata)
+        except Exception as e:
+            return self.error_response(str(e))

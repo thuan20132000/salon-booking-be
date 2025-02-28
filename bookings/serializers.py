@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Booking, BookingService, Review, BookingPayment
-from users.serializers import CustomerSerializer
-from salons.serializers import EmployeeSerializer
+from salons.serializers import SalonCustomerSerializer
+
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
@@ -78,7 +78,7 @@ class BookingPaymentSerializer(serializers.ModelSerializer):
 
 class BookingCalendarSerializer(serializers.ModelSerializer):
 
-    customer = CustomerSerializer(read_only=True)
+    customer = SalonCustomerSerializer(read_only=True)
 
     class Meta:
         model = Booking

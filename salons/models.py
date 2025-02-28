@@ -26,7 +26,7 @@ class Employee(models.Model):
         ('receptionist', 'Receptionist'),
         ('owner', 'Owner'),
     ]
-    user = models.OneToOneField('auth.User', on_delete=models.PROTECT, related_name='employee')
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='employee', null=True, blank=True)
     salon = models.ForeignKey(Salon, on_delete=models.PROTECT, related_name='employees', null=True, blank=True)
     role = models.CharField(max_length=255, choices=ROLES_CHOICES)
     is_active = models.BooleanField(default=True)
@@ -43,15 +43,16 @@ class Employee(models.Model):
     
     def save(self, *args, **kwargs):
         try:
+           
             if self.user is None:  # Only create user if this is a new employee without a user
                 self.user = User.objects.create_user(
                     username=self.phone_number, 
-                    password=self.phone_number
+                    password=None
                 )
             super().save(*args, **kwargs)
 
         except Exception as e:
-            print(e)    
+            print("Error creating employee: ", e)    
 
 
 class ServiceCategory(models.Model):
@@ -64,7 +65,7 @@ class ServiceCategory(models.Model):
         return self.name
     
 class Service(models.Model):
-    salon = models.ForeignKey(Salon, on_delete=models.PROTECT, related_name='services')
+    salon = models.ForeignKey(Salon, on_delete=models.SET_NULL, related_name='services', null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)

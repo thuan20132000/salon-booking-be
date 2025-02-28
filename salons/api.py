@@ -23,4 +23,10 @@ router.register(
     basename='salon_customers',
 )
 
+router.register(
+    r'salon-employees', 
+    views.SalonEmployeeViewSet, 
+    basename='salon_employees',
+)
+
 
