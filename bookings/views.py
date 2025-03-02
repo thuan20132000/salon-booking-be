@@ -83,7 +83,8 @@ class BookingViewSet(BaseBookingViewSet):
             
             
             if serializer.is_valid():
-                serializer.update(booking, request.data)
+                serializer.update_booking(booking, request.data)
+                serializer.update_booking_services(booking, request.data)
                 return self.success_response('Booking updated successfully', serializer.data)
             return self.error_response(serializer.errors)
         except Booking.DoesNotExist:
@@ -95,6 +96,18 @@ class BookingViewSet(BaseBookingViewSet):
             booking = Booking.objects.get(pk=pk)
             booking.delete()
             return self.success_response('Booking deleted successfully')
+        except Booking.DoesNotExist:
+            return self.error_response('Booking not found')
+        
+    @action(detail=True, methods=['patch'], url_path='update-booking-metadata')
+    def update_booking_metadata(self, request, pk=None):
+        try:
+            booking = self.get_object()
+            serializer = BookingUpdateSerializer(booking, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.update(booking, request.data)
+                return self.success_response('Booking status updated successfully', serializer.data)
+            return self.error_response(serializer.errors)
         except Booking.DoesNotExist:
             return self.error_response('Booking not found')
 

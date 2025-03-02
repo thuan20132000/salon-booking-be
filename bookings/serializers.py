@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Booking, BookingService, Review, BookingPayment
 from salons.serializers import SalonCustomerSerializer
-
+from salons.models import SalonCustomer
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
@@ -20,12 +20,13 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         services = validated_data.pop('services', [])
 
         booking_services = self.initial_data.get('services', [])
-
         booking = Booking.objects.create(**validated_data)
 
         for service in booking_services:
             BookingService.objects.create(booking=booking, **service)
 
+        print("created booking:: ", booking)
+        
         return booking
 
     def to_representation(self, instance):
@@ -39,19 +40,23 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
         fields = '__all__'
 
-    def update(self, instance, validated_data):
+    def update_booking(self, instance, validated_data):
+        self.update(instance=instance, validated_data=validated_data)
+        return instance
 
+    def update_booking_services(self, instance, validated_data):
+
+        
+        # update instance fields
         booking_services = self.initial_data.get('services', [])
 
         # remove all existing services
         BookingService.objects.filter(booking=instance).delete()
 
-        print("booking_services:: ", booking_services)
         # create new services   
         for service in booking_services:
             BookingService.objects.create(booking=instance, **service)
 
-        return instance
     
     def to_representation(self, instance):
         return BookingCalendarSerializer(instance).data

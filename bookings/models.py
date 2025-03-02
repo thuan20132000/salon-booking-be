@@ -32,9 +32,9 @@ class Booking(models.Model):
         ('scheduled', 'Scheduled'),
         ('confirmed', 'Confirmed'),
         ('cancelled', 'Cancelled'),
-        ('completed', 'Completed'),
         ('checked_in', 'Checked In'),
         ('checked_out', 'Checked Out'),
+        ('in_service', 'In Service'),
     ]
 
     BOOKING_SOURCE_CHOICES = [
@@ -68,17 +68,16 @@ class Booking(models.Model):
         self.save()
         
     def __str__(self):
-        return f"Booking #{self.id} - {self.customer.full_name} at {self.salon.name}"
+        return f"Booking #{self.id} at {self.salon.name}"
 
 
 class BookingService(models.Model):
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
         ('checked_in', 'Checked In'),
         ('checked_out', 'Checked Out'),
+        ('in_service', 'In Service'),
     ]
 
     booking = models.ForeignKey(
@@ -129,7 +128,7 @@ class BookingService(models.Model):
         self.booking.calculate_total_price()
 
     def __str__(self):
-        return f"{self.service.name} - {self.employee.nick_name}"
+        return f"{self.service} "
     
     
     class Meta:
