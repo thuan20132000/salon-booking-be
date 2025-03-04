@@ -12,6 +12,13 @@ router.register(
     views.BookingServiceViewSet, 
     basename='bookings-services'
 )
+
+router.register(
+    r'appointments', 
+    views.BookingAppointmentsViewSet, 
+    basename='booking-appointments'
+)
+
 router.register(
     r'', 
     views.BookingViewSet, 
