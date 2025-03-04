@@ -7,7 +7,8 @@ from .serializers import (
     BookingServiceSerializer, 
     BookingCalendarSerializer,
     BookingCreateSerializer,
-    BookingUpdateSerializer
+    BookingUpdateSerializer,
+    SalonAppointmentsSerializer
 )
 from rest_framework import status
 from django_filters import rest_framework as filters
@@ -131,6 +132,35 @@ class BookingCalendarViewSet(BaseBookingViewSet):
             serializer = BookingCalendarSerializer(bookings, many=True)
             metadata = {
                 'total_bookings': bookings.count(),
+            }
+            return self.success_response('Bookings fetched successfully', serializer.data, metadata)
+        except Exception as e:
+            return self.error_response(str(e))
+
+class SalonAppointmentsFilter(filters.FilterSet):
+
+    salon_id = filters.NumberFilter(field_name='salon_id', lookup_expr='exact', required=True)
+    selected_date = filters.DateFilter(field_name='selected_date', lookup_expr='exact', required=False)
+    status = filters.ChoiceFilter(field_name='status', choices=Booking.STATUS_CHOICES, required=False)
+    booking_source = filters.ChoiceFilter(field_name='booking_source', choices=Booking.BOOKING_SOURCE_CHOICES, required=False)
+    
+    class Meta:
+        model = Booking
+        fields = ['salon_id', 'selected_date', 'status']
+
+class BookingAppointmentsViewSet(BaseBookingViewSet):
+    queryset = Booking.objects.all()
+    serializer_class = SalonAppointmentsSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = SalonAppointmentsFilter
+    http_method_names = ['get']
+
+    def list(self, request):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            metadata = {
+                'total_bookings': queryset.count(),
             }
             return self.success_response('Bookings fetched successfully', serializer.data, metadata)
         except Exception as e:

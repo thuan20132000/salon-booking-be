@@ -109,4 +109,21 @@ class BookingCalendarSerializer(serializers.ModelSerializer):
         return obj.end_time.strftime('%Y-%m-%d %H:%M:%S')
     
     
-        
+
+class SalonAppointmentsSerializer(serializers.ModelSerializer):
+    customer = SalonCustomerSerializer(read_only=True)
+    class Meta:
+        model = Booking
+        fields = [
+            'id', 
+            'status', 
+            'customer', 
+            'salon', 
+            'booking_services', 
+            'total_price', 
+            'selected_date', 
+            'booking_source'
+        ]
+        depth = 2
+
+
