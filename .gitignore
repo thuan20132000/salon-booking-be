@@ -91,3 +91,5 @@ local_settings.py
 # Database backups
 *.dump
 *.sql
+
+data/postgres/

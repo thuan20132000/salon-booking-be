@@ -1,0 +1,39 @@
+services:
+  postgres_db:
+    image: postgres:16.1
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      - salon_booking_network
+
+  
+  salon_booking_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - ./.env
+    volumes:
+      - ./:/app/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+    networks:
+      - salon_booking_network
+
+volumes:
+  postgres_data:
+
+networks:
+  salon_booking_network:
+    driver: bridge
