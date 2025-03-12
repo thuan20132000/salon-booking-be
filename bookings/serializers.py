@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Booking, BookingService, Review, BookingPayment
-from salons.serializers import SalonCustomerSerializer
+from salons.serializers import SalonCustomerSerializer, EmployeeSerializer
 from salons.models import SalonCustomer
+
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
@@ -127,3 +128,23 @@ class SalonAppointmentsSerializer(serializers.ModelSerializer):
         depth = 2
 
 
+class EmployeeServiceAppointmentSerializer(serializers.ModelSerializer):
+
+    employee = EmployeeSerializer(read_only=True)
+    class Meta:
+        model = BookingService
+        fields = '__all__'
+        depth = 2
+
+    def get_status(self, obj):
+        return obj.get_status_display()
+    
+    def get_booking_source(self, obj):
+        return obj.get_booking_source_display()
+
+
+class EmployeeBookingAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingService
+        fields = '__all__'
+        depth = 2

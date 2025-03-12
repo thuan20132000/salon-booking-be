@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from users.models import UserProfile, UserRole
+from users.models import UserRole
 from django.contrib.auth.models import User
 
 class Command(BaseCommand):
@@ -29,15 +29,7 @@ class Command(BaseCommand):
             # Get admin role
             admin_role = UserRole.objects.get(name='Admin')
             
-            # Create UserProfile for superuser
-            UserProfile.objects.get_or_create(
-                user=superuser,
-                role=admin_role,
-                defaults={
-                    'phone_number': '1234567890',
-                    # Add other required fields here
-                }
-            )
+            
             
             self.stdout.write(self.style.SUCCESS('Created superuser with profile'))
 

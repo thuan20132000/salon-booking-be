@@ -20,6 +20,21 @@ router.register(
 )
 
 router.register(
+    r'employee-appointments', 
+    views.EmployeeServiceAppointmentViewSet, 
+    basename='employee-appointments'
+)
+
+
+router.register(
+    r'employee-booking-availability', 
+    views.EmployeeBookingAvailabilityViewSet, 
+    basename='employee-booking-availability'
+)
+
+
+
+router.register(
     r'', 
     views.BookingViewSet, 
     basename='bookings',
