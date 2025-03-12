@@ -8,11 +8,16 @@ from .serializers import (
     BookingCalendarSerializer,
     BookingCreateSerializer,
     BookingUpdateSerializer,
-    SalonAppointmentsSerializer
+    SalonAppointmentsSerializer,
+    EmployeeServiceAppointmentSerializer,
+    EmployeeBookingAvailabilitySerializer
 )
 from rest_framework import status
 from django_filters import rest_framework as filters
 # Create your views here.
+
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 # create abstract viewset for booking and booking service
 class BaseBookingViewSet(viewsets.ModelViewSet):
@@ -165,3 +170,153 @@ class BookingAppointmentsViewSet(BaseBookingViewSet):
             return self.success_response('Bookings fetched successfully', serializer.data, metadata)
         except Exception as e:
             return self.error_response(str(e))
+
+class EmployeeServiceAppointmentFilter(filters.FilterSet):
+    employee_id = filters.NumberFilter(field_name='employee_id', lookup_expr='exact', required=True)
+    booking__selected_date = filters.DateFilter(field_name='booking__selected_date', lookup_expr='exact', required=True)
+    booking__status = filters.ChoiceFilter(field_name='booking__status', choices=BookingService.STATUS_CHOICES, required=False)
+    class Meta:
+        model = BookingService
+        fields = [
+            'employee_id',
+            'status',
+            'booking__selected_date',
+            'booking__salon_id',
+            'booking__status'
+        ]
+
+class EmployeeServiceAppointmentViewSet(BaseBookingViewSet):
+    queryset = BookingService.objects.all()
+    serializer_class = EmployeeServiceAppointmentSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = EmployeeServiceAppointmentFilter
+    http_method_names = ['get']
+
+    def list(self, request):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            metadata = {
+                'total_bookings': queryset.count(),
+            }
+            return self.success_response('Bookings fetched successfully', serializer.data, metadata)
+        except Exception as e:
+            return self.error_response(str(e))
+        
+
+class EmployeeBookingAvailabilityFilter(filters.FilterSet):
+    employee_id = filters.NumberFilter(field_name='employee_id', lookup_expr='exact', required=True)
+    booking__selected_date = filters.DateFilter(field_name='booking__selected_date', lookup_expr='exact', required=True)
+
+    class Meta:
+        model = BookingService
+        fields = ['employee_id', 'booking__selected_date']
+
+
+class EmployeeBookingAvailabilityViewSet(BaseBookingViewSet):
+    queryset = BookingService.objects.all()
+    serializer_class = EmployeeBookingAvailabilitySerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = EmployeeBookingAvailabilityFilter
+
+    def _generate_time_slots(self, start_time, end_time, service_duration, interval_minutes=15):
+        """Helper function to generate time slots with specified interval"""
+        slots = []
+        current = start_time
+        
+        while current + timedelta(minutes=service_duration) <= end_time:
+            service_end = current + timedelta(minutes=service_duration)
+            slots.append({
+                'start': current.isoformat(),
+                'end': service_end.isoformat(),
+                'duration': service_duration
+            })
+            current += timedelta(minutes=interval_minutes)
+        return slots
+
+    
+    def get_booking_availability(self, request, *args, **kwargs):
+        try:
+            # Get date from query params
+            selected_date = request.query_params.get('booking__selected_date')
+            service_duration = request.query_params.get('service_duration')
+            service_duration = int(service_duration) if service_duration else 15
+
+            if not service_duration:
+                return self.error_response('service_duration is required')
+
+            if not selected_date:
+                return self.error_response('selected_date is required')
+
+            # Get filtered queryset based on existing filters (employee_id, date)
+            queryset = self.filter_queryset(self.get_queryset())
+            
+            # Sort bookings by start time
+            booked_slots = queryset.order_by('start_at')
+            
+            # Convert selected_date to datetime objects for start and end of day
+            date_obj = datetime.strptime(selected_date, '%Y-%m-%d')
+            start_of_day = timezone.make_aware(date_obj.replace(hour=9, minute=30))  # Assuming 9 AM opening
+            end_of_day = timezone.make_aware(date_obj.replace(hour=19, minute=0))   # Assuming 5 PM closing
+           
+            # Generate available time slots between bookings
+            available_slots = []
+            current_time = start_of_day
+
+            for booking in booked_slots:
+                # Calculate the latest possible start time that wouldn't overlap with the booking
+                latest_start = booking.start_at - timedelta(minutes=service_duration)
+                
+                # If there's enough time before the booking, generate slots
+                if current_time < latest_start:
+                    slots = self._generate_time_slots(
+                        current_time,
+                        latest_start,  # End time is the latest possible start
+                        service_duration
+                    )
+                    available_slots.extend(slots)
+                
+                # Move current time to after this booking
+                current_time = booking.end_at
+
+            # Add slots after the last booking until end of day
+            if current_time < end_of_day:
+                slots = self._generate_time_slots(
+                    current_time,
+                    end_of_day,
+                    service_duration
+                )
+                available_slots.extend(slots)
+
+
+            metadata = {
+                'total_bookings': booked_slots.count(),
+                'booked_slots': [{
+                    'start': booking.start_at.isoformat(),
+                    'end': booking.end_at.isoformat(),
+                    'service_name': booking.service.name,
+                    'duration': booking.duration,
+                    'booking_id': booking.booking.id,
+                    'service_id': booking.service.id
+                } for booking in booked_slots],
+                'available_slots': available_slots,
+                'total_available_slots': len(available_slots),
+                'service_duration': service_duration
+            }
+            
+            return self.success_response(
+                'Employee booking availability fetched successfully',
+                None,
+                metadata=metadata
+            )
+        except Exception as e:
+            return self.error_response(str(e))
+    
+    @action(
+            detail=False, 
+            methods=['get'], 
+            url_path='availability'
+        )
+    def get_availability(self, request, *args, **kwargs):
+        print("get_availability")
+        return self.get_booking_availability(request, *args, **kwargs)

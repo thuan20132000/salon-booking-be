@@ -258,3 +258,5 @@ class SalonEmployeeViewSet(BaseApiViewSet):
         except Exception as e:
             print("error:: ", e)
             return self.error_response(str(e))
+        
+    
