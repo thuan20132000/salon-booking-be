@@ -10,7 +10,7 @@ from .serializers import (
     BookingUpdateSerializer,
     SalonAppointmentsSerializer,
     EmployeeServiceAppointmentSerializer,
-    EmployeeBookingAvailabilitySerializer
+    EmployeeBookingAvailabilitySerializer,
 )
 from rest_framework import status
 from django_filters import rest_framework as filters
@@ -219,12 +219,18 @@ class EmployeeBookingAvailabilityViewSet(BaseBookingViewSet):
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = EmployeeBookingAvailabilityFilter
 
-    def _generate_time_slots(self, start_time, end_time, service_duration, interval_minutes=15):
+    def _generate_time_slots(
+        self, 
+        start_time, 
+        next_booking_start_time, 
+        service_duration, 
+        interval_minutes=15
+    ):
         """Helper function to generate time slots with specified interval"""
         slots = []
         current = start_time
         
-        while current + timedelta(minutes=service_duration) <= end_time:
+        while current + timedelta(minutes=service_duration) <= next_booking_start_time:
             service_end = current + timedelta(minutes=service_duration)
             slots.append({
                 'start': current.isoformat(),
@@ -235,7 +241,7 @@ class EmployeeBookingAvailabilityViewSet(BaseBookingViewSet):
         return slots
 
     
-    def get_booking_availability(self, request, *args, **kwargs):
+    def get_employee_booking_availability(self, request, *args, **kwargs):
         try:
             # Get date from query params
             selected_date = request.query_params.get('booking__selected_date')
@@ -256,57 +262,51 @@ class EmployeeBookingAvailabilityViewSet(BaseBookingViewSet):
             
             # Convert selected_date to datetime objects for start and end of day
             date_obj = datetime.strptime(selected_date, '%Y-%m-%d')
-            start_of_day = timezone.make_aware(date_obj.replace(hour=9, minute=30))  # Assuming 9 AM opening
-            end_of_day = timezone.make_aware(date_obj.replace(hour=19, minute=0))   # Assuming 5 PM closing
+            start_of_day = timezone.make_aware(date_obj.replace(hour=9, minute=30))  # Assuming 9:3 AM opening
+            end_of_day = timezone.make_aware(date_obj.replace(hour=19, minute=30))   # Assuming 5 PM closing
            
             # Generate available time slots between bookings
             available_slots = []
             current_time = start_of_day
 
-            for booking in booked_slots:
+            for booked_slot in booked_slots:
                 # Calculate the latest possible start time that wouldn't overlap with the booking
-                latest_start = booking.start_at - timedelta(minutes=service_duration)
-                
+                service_duration_time = timedelta(minutes=service_duration)
+                latest_start = booked_slot.start_at - service_duration_time
+
                 # If there's enough time before the booking, generate slots
-                if current_time < latest_start:
+                if current_time <= latest_start:
                     slots = self._generate_time_slots(
                         current_time,
-                        latest_start,  # End time is the latest possible start
-                        service_duration
+                        next_booking_start_time=booked_slot.start_at,
+                        service_duration=service_duration,
+                        interval_minutes=10
                     )
                     available_slots.extend(slots)
-                
                 # Move current time to after this booking
-                current_time = booking.end_at
+                current_time = booked_slot.end_at
 
             # Add slots after the last booking until end of day
             if current_time < end_of_day:
                 slots = self._generate_time_slots(
                     current_time,
                     end_of_day,
-                    service_duration
+                    service_duration,
+                    interval_minutes=10
                 )
                 available_slots.extend(slots)
 
 
             metadata = {
                 'total_bookings': booked_slots.count(),
-                'booked_slots': [{
-                    'start': booking.start_at.isoformat(),
-                    'end': booking.end_at.isoformat(),
-                    'service_name': booking.service.name,
-                    'duration': booking.duration,
-                    'booking_id': booking.booking.id,
-                    'service_id': booking.service.id
-                } for booking in booked_slots],
-                'available_slots': available_slots,
                 'total_available_slots': len(available_slots),
-                'service_duration': service_duration
+                'service_duration': service_duration,
             }
+
             
             return self.success_response(
                 'Employee booking availability fetched successfully',
-                None,
+                data=available_slots,
                 metadata=metadata
             )
         except Exception as e:
@@ -319,4 +319,4 @@ class EmployeeBookingAvailabilityViewSet(BaseBookingViewSet):
         )
     def get_availability(self, request, *args, **kwargs):
         print("get_availability")
-        return self.get_booking_availability(request, *args, **kwargs)
+        return self.get_employee_booking_availability(request, *args, **kwargs)
