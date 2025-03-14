@@ -94,7 +94,7 @@ class BookingService(models.Model):
     notes = models.TextField(blank=True)
     employee = models.ForeignKey(
         Employee, 
-        on_delete=models.PROTECT, 
+        on_delete=models.SET_NULL, 
         related_name='booking_employee',
         null=True,
         blank=True

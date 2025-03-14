@@ -8,11 +8,13 @@ from .serializers import (
     SalonCustomerSerializer, 
     EmployeeWorkingHoursSerializer, 
     EmployeeWorkingHoursUpdateSerializer,
-    EmployeeDaysOffSerializer
+    EmployeeDaysOffSerializer,
+    CustomerBookingHistorySerializer
 )
 from commons.base_api_viewset import BaseApiViewSet
 from django_filters import rest_framework as filters
 from rest_framework.decorators import action
+from bookings.models import Booking
 # Create your views here.
 
 class BaseSalonViewSet(viewsets.ModelViewSet):
@@ -260,3 +262,31 @@ class SalonEmployeeViewSet(BaseApiViewSet):
             return self.error_response(str(e))
         
     
+class CustomerBookingHistoryFilter(filters.FilterSet):
+    customer_id = filters.NumberFilter(field_name='customer_id', lookup_expr='exact', required=True)
+    salon_id = filters.NumberFilter(field_name='salon_id', lookup_expr='exact', required=True)
+    
+    class Meta:
+        model = Booking
+        fields = ['customer_id', 'salon_id', 'selected_date']
+        order_by = ['created_at']
+
+class CustomerBookingHistoryViewSet(BaseApiViewSet):
+    queryset = Booking.objects.all()
+    serializer_class = CustomerBookingHistorySerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = CustomerBookingHistoryFilter
+    http_method_names = ['get']
+
+    def list(self, request):
+        try:
+            queryset = self.filter_queryset(self.get_queryset()).order_by('-selected_date')
+            serializer = self.get_serializer(queryset, many=True)
+            
+            data = serializer.data
+            metadata = {
+                'total_bookings': queryset.count(),
+            }
+            return self.success_response('Bookings fetched successfully', data, metadata)
+        except Exception as e:
+            return self.error_response(str(e))

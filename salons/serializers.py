@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Salon, Employee, Service, ServiceCategory, SalonCustomer, EmployeeWorkingHours, EmployeeDaysOff
-
+from bookings.models import Booking
 class SalonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Salon
@@ -66,3 +66,20 @@ class EmployeeDaysOffSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeDaysOff
         fields = ['id', 'employee', 'start_date', 'end_date', 'reason', 'created_at', 'updated_at']
+
+
+class CustomerBookingHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = [
+            'id', 
+            'status', 
+            'created_at',
+            'booking_services',
+            'customer',
+            'salon',
+            'total_price',
+            'selected_date',
+            'booking_source',
+            ]
+        depth = 2
