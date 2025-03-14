@@ -94,7 +94,7 @@ class EmployeeWorkingHours(models.Model):
         (7, 'Sunday'),
     ]
 
-    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name='working_hours')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='working_hours')
     day = models.IntegerField(choices=DAYS_CHOICES)
     start_time = models.TimeField(default=time(9, 0))
     end_time = models.TimeField(default=time(18, 0))

@@ -15,7 +15,6 @@ class BookingAdmin(admin.ModelAdmin):
         'salon', 
         'status', 
         'created_at',
-        
     )
     inlines = [BookingServiceInline]
 @admin.register(BookingService)

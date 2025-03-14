@@ -148,3 +148,11 @@ class EmployeeBookingAvailabilitySerializer(serializers.ModelSerializer):
         model = BookingService
         fields = '__all__'
         depth = 2
+
+
+class CustomerBookingHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = '__all__'
+        depth = 2
+

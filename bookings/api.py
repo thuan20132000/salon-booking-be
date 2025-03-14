@@ -33,7 +33,6 @@ router.register(
 )
 
 
-
 router.register(
     r'', 
     views.BookingViewSet, 

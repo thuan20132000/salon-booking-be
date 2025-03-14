@@ -29,4 +29,9 @@ router.register(
     basename='salon_employees',
 )
 
+router.register(
+    r'customer-booking-history', 
+    views.CustomerBookingHistoryViewSet, 
+    basename='customer-booking-history'
+)
 

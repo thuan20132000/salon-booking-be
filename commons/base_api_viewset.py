@@ -47,10 +47,11 @@ class BaseApiViewSet(viewsets.ModelViewSet):
             'status_code': status.HTTP_400_BAD_REQUEST
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    def success_response(self, message, data=None, status_code=status.HTTP_200_OK):
+    def success_response(self, message, data=None, metadata=None, status_code=status.HTTP_200_OK):
         return Response({
             'message': message,
             'data': data,
+            'metadata': metadata,
             'status_code': status_code
         }, status=status_code)
     
